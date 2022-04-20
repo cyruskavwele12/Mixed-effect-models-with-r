@@ -1,0 +1,79 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Linear Mixed Effect Models with R
+# Author: Cyrus Kavwele
+# Date: 20th April 2022
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~ clear memoery
+rm(list=ls())
+
+#~Libraries
+#change some settings
+# options(contrasts = c("contr.sum","contr.poly")) 
+#this tweaks makes sure that contrasts are interpretable as main effects
+
+#time to load some packages!
+library(lme4) #fit the models
+library(lmerTest) #gives p-values and more info
+library(car) #more settings for regression output
+library(tidyr) #for data wrangling
+library(dplyr) #for data wrangling
+library(tibble) #for data wrangling
+library(ggplot2) #plotting raw data
+library(data.table) #for pretty HTML tables of model parameters
+
+library(brms)       # bayesian regression!
+library(emmeans)    # used to get predicted means per condition
+library(modelr)     # used to get predicted means per condition
+library(tidybayes)  # for accessing model posteriors 
+library(bayestestR) # for testing over posteriors
+
+#load the data
+load("dragons.RData")
+head(dragons)
+
+ggplot(dragons, aes(x=testScore))+
+  geom_histogram(color="lightblue")
+# scale the explanatory variables
+dragons$bodyLength2 <- scale(dragons$bodyLength, center= TRUE, scale =TRUE)
+
+basic.lm <- lm(testScore~bodyLength2, data = dragons)
+summary(basic.lm)
+ggplot(dragons, aes(x=bodyLength, y= testScore))+
+  geom_point()+
+  geom_smooth(method ="lm")
+plot(basic.lm)
+# boxplots
+ggplot(dragons, aes(x=mountainRange, y=testScore))+
+  geom_violin(fill="lightblue", color ="black") +
+  geom_boxplot(fill= "lightgrey")
+#~~~~~~~~~~~~~~~~~~~~~~~
+ggplot(dragons, aes(x=bodyLength, y=testScore))+
+  geom_point(size= 0.2)+
+  facet_wrap(~mountainRange)+
+  labs(title = "faceted plot",x="Body length", y="Test score")
+
+m.lm <-lm(testScore~bodyLength2 + mountainRange, data =dragons)
+summary(m.lm)
+# body length is not significant let control for mountain ranges 
+
+l.lm2<-lmer(testScore~bodyLength2 + (1|mountainRange), data =dragons)
+summary(l.lm2)
+
+# visualise results
+ggplot(dragons, aes(x=bodyLength, y=testScore))+
+  facet_wrap(~mountainRange, nrow = 2)+
+  geom_point(alpha = 0.5) +
+  theme_classic()+
+  geom_line(data = cbind(dragons, pred =predict(l.lm2)), aes(y=pred), size = 1) +
+  theme(legend.position = "none",
+        panel.spacing = unit(2, "lines"))
+        
+
+
+
+
+
+
+
+
+
